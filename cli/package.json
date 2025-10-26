@@ -1,0 +1,15 @@
+{
+  "name": "up-cli",
+  "version": "0.6.0",
+  "type": "module",
+  "bin": {
+    "up": "./index.js"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.30.1",
+    "@solana/web3.js": "^1.95.3",
+    "@solana/spl-token": "^0.4.8",
+    "commander": "^11.1.0",
+    "bn.js": "^5.2.1"
+  }
+}
