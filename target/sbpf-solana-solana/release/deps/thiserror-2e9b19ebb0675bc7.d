@@ -1,0 +1,15 @@
+/home/patrick/UP/target/sbpf-solana-solana/release/deps/libthiserror-2e9b19ebb0675bc7.rmeta: /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/lib.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/aserror.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/display.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/provide.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/var.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/private.rs /home/patrick/UP/target/sbpf-solana-solana/release/build/thiserror-c99ba4de03962e3a/out/private.rs
+
+/home/patrick/UP/target/sbpf-solana-solana/release/deps/libthiserror-2e9b19ebb0675bc7.rlib: /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/lib.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/aserror.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/display.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/provide.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/var.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/private.rs /home/patrick/UP/target/sbpf-solana-solana/release/build/thiserror-c99ba4de03962e3a/out/private.rs
+
+/home/patrick/UP/target/sbpf-solana-solana/release/deps/thiserror-2e9b19ebb0675bc7.d: /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/lib.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/aserror.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/display.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/provide.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/var.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/private.rs /home/patrick/UP/target/sbpf-solana-solana/release/build/thiserror-c99ba4de03962e3a/out/private.rs
+
+/home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/lib.rs:
+/home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/aserror.rs:
+/home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/display.rs:
+/home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/provide.rs:
+/home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/var.rs:
+/home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-2.0.17/src/private.rs:
+/home/patrick/UP/target/sbpf-solana-solana/release/build/thiserror-c99ba4de03962e3a/out/private.rs:
+
+# env-dep:OUT_DIR=/home/patrick/UP/target/sbpf-solana-solana/release/build/thiserror-c99ba4de03962e3a/out

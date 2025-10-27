@@ -1,0 +1,10 @@
+/home/patrick/UP/target/sbpf-solana-solana/release/deps/spl_token_group_interface-70e52c253997ad0f.so: /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/lib.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/error.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/instruction.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/state.rs
+
+/home/patrick/UP/target/sbpf-solana-solana/release/deps/libspl_token_group_interface-70e52c253997ad0f.rlib: /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/lib.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/error.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/instruction.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/state.rs
+
+/home/patrick/UP/target/sbpf-solana-solana/release/deps/spl_token_group_interface-70e52c253997ad0f.d: /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/lib.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/error.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/instruction.rs /home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/state.rs
+
+/home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/lib.rs:
+/home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/error.rs:
+/home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/instruction.rs:
+/home/patrick/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spl-token-group-interface-0.6.0/src/state.rs:

@@ -1,9 +1,25 @@
 #!/usr/bin/env node
+
+// Anchor is CommonJS — default import then destructure
+import anchor from "@coral-xyz/anchor";
+const { AnchorProvider, Program, BN, setProvider } = anchor;
+
+// Commander + Node core (ESM-safe)
 import { Command } from "commander";
-import fs from "fs"; import path from "path";
-import { AnchorProvider, Program, BN } from "@coral-xyz/anchor";
+import * as fs from "fs";
+import * as path from "path";
+
+// web3.js is ESM
 import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
+
+// spl-token is CommonJS — default import then destructure
+import splToken from "@solana/spl-token";
+const {
+  TOKEN_2022_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+  createAssociatedTokenAccountInstruction,
+} = splToken;
 
 const programName="up_token"; const program=new Command(); program.name("up").description("$UP CLI").version("0.6.0");
 function repoRoot(){ let dir=path.join(process.cwd(),".."); for(let i=0;i<6;i++){ const idl=path.join(dir,"target","idl",`${programName}.json`); if(fs.existsSync(idl)) return dir; dir=path.join(dir,".."); } throw new Error("IDL missing. Run anchor build at repo root."); }

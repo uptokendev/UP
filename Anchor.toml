@@ -1,5 +1,8 @@
 [programs.localnet]
-up_token = "Up111111111111111111111111111111111111111"
+up_token = "HHP6PWv5APf8fS1cTGcZyYcbKfGL4KFYVoLM1Xzoc5Uw"
+
+[programs.devnet]
+up_token = "HHP6PWv5APf8fS1cTGcZyYcbKfGL4KFYVoLM1Xzoc5Uw"
 
 [provider]
 cluster = "localnet"
@@ -7,3 +10,6 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "anchor test"
+
+[toolchain]
+anchor_version = "0.32.1"

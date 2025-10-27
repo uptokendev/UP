@@ -1,0 +1,244 @@
+{
+  "version": "0.1.0",
+  "name": "up_token",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        { "name": "config", "isMut": true, "isSigner": false },
+        { "name": "payer", "isMut": true, "isSigner": true },
+        { "name": "mint", "isMut": false, "isSigner": false },
+        { "name": "reflectionVault", "isMut": true, "isSigner": false },
+        { "name": "holdPoolVault", "isMut": true, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "args", "type": { "defined": "InitializeArgs" } }
+      ]
+    },
+    {
+      "name": "setFees",
+      "accounts": [
+        { "name": "config", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": false, "isSigner": true }
+      ],
+      "args": [
+        { "name": "fees", "type": { "defined": "FeeConfig" } }
+      ]
+    },
+    {
+      "name": "setDevWallet",
+      "accounts": [
+        { "name": "config", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": false, "isSigner": true }
+      ],
+      "args": [
+        { "name": "newDev", "type": "publicKey" }
+      ]
+    },
+    {
+      "name": "setHookMode",
+      "accounts": [
+        { "name": "config", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": false, "isSigner": true }
+      ],
+      "args": [
+        { "name": "enforce", "type": "bool" }
+      ]
+    },
+    {
+      "name": "startNextEpoch",
+      "accounts": [
+        { "name": "config", "isMut": true, "isSigner": false },
+        { "name": "holdPoolVault", "isMut": true, "isSigner": false },
+        { "name": "payer", "isMut": true, "isSigner": true },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false },
+        { "name": "epoch", "isMut": true, "isSigner": false }
+      ],
+      "args": []
+    },
+    {
+      "name": "claimReflection",
+      "accounts": [
+        { "name": "config", "isMut": true, "isSigner": false },
+        { "name": "holderState", "isMut": true, "isSigner": false },
+        { "name": "mint", "isMut": false, "isSigner": false },
+        { "name": "reflectionVault", "isMut": true, "isSigner": false },
+        { "name": "holderToken", "isMut": true, "isSigner": false },
+        { "name": "vaultAuthority", "isMut": false, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false },
+        { "name": "signer", "isMut": true, "isSigner": true }
+      ],
+      "args": []
+    },
+    {
+      "name": "claimHoldPool",
+      "accounts": [
+        { "name": "config", "isMut": true, "isSigner": false },
+        { "name": "epoch", "isMut": true, "isSigner": false },
+        { "name": "marker", "isMut": true, "isSigner": false },
+        { "name": "holderState", "isMut": true, "isSigner": false },
+        { "name": "mint", "isMut": false, "isSigner": false },
+        { "name": "holderToken", "isMut": true, "isSigner": false },
+        { "name": "holdPoolVault", "isMut": true, "isSigner": false },
+        { "name": "vaultAuthority", "isMut": false, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false },
+        { "name": "signer", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "epochId", "type": "u64" }
+      ]
+    },
+    {
+      "name": "programTransfer",
+      "accounts": [
+        { "name": "config", "isMut": true, "isSigner": false },
+        { "name": "mint", "isMut": false, "isSigner": false },
+        { "name": "fromToken", "isMut": true, "isSigner": false },
+        { "name": "fromHolderState", "isMut": true, "isSigner": false },
+        { "name": "toToken", "isMut": true, "isSigner": false },
+        { "name": "toHolderState", "isMut": true, "isSigner": false },
+        { "name": "devToken", "isMut": true, "isSigner": false },
+        { "name": "reflectionVault", "isMut": true, "isSigner": false },
+        { "name": "holdPoolVault", "isMut": true, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false },
+        { "name": "signer", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "amount", "type": "u64" }
+      ]
+    },
+    {
+      "name": "onTransfer",
+      "accounts": [
+        { "name": "fromToken", "isMut": false, "isSigner": false },
+        { "name": "toToken", "isMut": false, "isSigner": false },
+        { "name": "config", "isMut": true, "isSigner": false }
+      ],
+      "args": [
+        { "name": "amount", "type": "u64" }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "GlobalConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "publicKey" },
+          { "name": "devWallet", "type": "publicKey" },
+          { "name": "mint", "type": "publicKey" },
+          { "name": "burnBps", "type": "u16" },
+          { "name": "devBps", "type": "u16" },
+          { "name": "reflectionBps", "type": "u16" },
+          { "name": "holdPoolBps", "type": "u16" },
+          { "name": "epochLength", "type": "i64" },
+          { "name": "currentEpochStart", "type": "i64" },
+          { "name": "reflectionAccPerToken", "type": "u128" },
+          { "name": "enforceHook", "type": "bool" },
+          { "name": "vaultAuthority", "type": "publicKey" },
+          { "name": "vaultBump", "type": "u8" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "HolderState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "wallet", "type": "publicKey" },
+          { "name": "reflectionDebt", "type": "u128" },
+          { "name": "unclaimedReflection", "type": "u64" },
+          { "name": "lastOutgoingTs", "type": "i64" },
+          { "name": "streakStartTs", "type": "i64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "Epoch",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "epochId", "type": "u64" },
+          { "name": "epochStartTs", "type": "i64" },
+          { "name": "poolAmount", "type": "u64" },
+          { "name": "remainingPool", "type": "u64" },
+          { "name": "totalWeightAccumulated", "type": "u128" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "ClaimMarker",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "epochId", "type": "u64" },
+          { "name": "wallet", "type": "publicKey" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "InitializeArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "publicKey" },
+          { "name": "devWallet", "type": "publicKey" },
+          { "name": "feeConfig", "type": { "defined": "FeeConfig" } },
+          { "name": "epochLength", "type": "i64" }
+        ]
+      }
+    },
+    {
+      "name": "FeeConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "burnBps", "type": "u16" },
+          { "name": "devBps", "type": "u16" },
+          { "name": "reflectionBps", "type": "u16" },
+          { "name": "holdPoolBps", "type": "u16" }
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "ReflectionAccrued",
+      "fields": [
+        { "name": "reflAdded", "type": "u64", "index": false },
+        { "name": "accPerToken", "type": "u128", "index": false }
+      ]
+    },
+    {
+      "name": "TransferHookObserved",
+      "fields": [
+        { "name": "from", "type": "publicKey", "index": false },
+        { "name": "to", "type": "publicKey", "index": false },
+        { "name": "amount", "type": "u64", "index": false }
+      ]
+    }
+  ],
+  "errors": [
+    { "code": 6000, "name": "TransferBlocked", "msg": "Transfer blocked: must go through authorized flow." },
+    { "code": 6001, "name": "MissingEpochAccount", "msg": "Missing or incorrect epoch PDA." },
+    { "code": 6002, "name": "InvalidVaultAuthority", "msg": "Vault authority PDA mismatch." },
+    { "code": 6003, "name": "EpochNotReady", "msg": "Epoch not ready to roll." },
+    { "code": 6004, "name": "IneligibleForHoldPool", "msg": "Not eligible for this epoch's hold-pool claim." },
+    { "code": 6005, "name": "ZeroEffectiveSupply", "msg": "Effective circulating supply is zero." },
+    { "code": 6006, "name": "InvalidFeeConfig", "msg": "Fee configuration exceeds 3.5% cap." },
+    { "code": 6007, "name": "MathOverflow", "msg": "Math overflow." }
+  ],
+  "metadata": { "address": "<PROGRAM_ID>" }
+}
