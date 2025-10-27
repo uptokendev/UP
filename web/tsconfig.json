@@ -17,7 +17,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-<<<<<<< HEAD
     "baseUrl": ".",
     "incremental": true,
     "plugins": [
@@ -25,25 +24,14 @@
         "name": "next"
       }
     ]
-=======
-    "baseUrl": "."
->>>>>>> 1b3568e9557a0d186e14cc8b4511fe3aaf270877
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
-<<<<<<< HEAD
     "**/*.tsx",
     ".next/types/**/*.ts"
-=======
-    "**/*.tsx"
->>>>>>> 1b3568e9557a0d186e14cc8b4511fe3aaf270877
   ],
   "exclude": [
     "node_modules"
   ]
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 1b3568e9557a0d186e14cc8b4511fe3aaf270877
