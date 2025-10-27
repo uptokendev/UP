@@ -23,6 +23,7 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "@types/react": "19.2.2"
+    "@types/react": "19.2.2",
+    "pino-pretty": "^13.1.2"
   }
 }

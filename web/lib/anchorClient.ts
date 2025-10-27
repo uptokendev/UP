@@ -1,1 +1,30 @@
-'use client';import {AnchorProvider,Program,Idl} from '@coral-xyz/anchor';import {Connection,PublicKey} from '@solana/web3.js';export async function getProgram(){const rpc=process.env.NEXT_PUBLIC_RPC_URL||'https://api.devnet.solana.com';const connection=new Connection(rpc,'confirmed');const wallet=window.solana;const provider=new AnchorProvider(connection,wallet,{commitment:'confirmed'});const idl=await (await fetch('/idl/up_token.json')).json() as Idl;const programId=new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID!);return new Program(idl,programId,provider) as any;}
+'use client';
+
+import * as anchor from '@coral-xyz/anchor';
+import { Connection, PublicKey } from '@solana/web3.js';
+
+export async function getProgram() {
+  const rpc = process.env.NEXT_PUBLIC_RPC_URL || 'https://api.devnet.solana.com';
+  const connection = new Connection(rpc, 'confirmed');
+
+  // Use injected wallet (Phantom/Solflare/etc.)
+  const wallet = (window as any).solana;
+  if (!wallet || !wallet.publicKey) {
+    throw new Error('Connect a wallet first');
+  }
+
+  const provider = new anchor.AnchorProvider(connection, wallet as any, {
+    commitment: 'confirmed',
+  });
+  anchor.setProvider(provider);
+
+  const idlRes = await fetch('/idl/up_token.json');
+  if (!idlRes.ok) throw new Error('IDL not found at /idl/up_token.json');
+  const idl = (await idlRes.json()) as anchor.Idl;
+
+  const programId = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID!);
+
+  // Construct via `any` to sidestep constructor signature differences across Anchor versions.
+  const program = new (anchor as any).Program(idl, programId, provider);
+  return program as any;
+}
