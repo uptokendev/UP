@@ -5,6 +5,9 @@ members = ["programs/up_token"]
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
+<<<<<<< HEAD
 
 [profile.release]
 overflow-checks = true
+=======
+>>>>>>> 1b3568e9557a0d186e14cc8b4511fe3aaf270877
