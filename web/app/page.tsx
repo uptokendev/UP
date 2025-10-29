@@ -1,12 +1,19 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
 import Providers from './providers';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+// import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'; // now provided in <Header/>
 import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey, Connection, SystemProgram, Transaction } from '@solana/web3.js';
 import { getProgram } from '../lib/anchorClient';
 import * as spl from '@solana/spl-token';
 import { BN } from '@coral-xyz/anchor';
+
+// ✨ New UI pieces
+import Header from "../components/Header";
+import Hero from "../components/Hero";
+import SocialLinks from "../components/SocialLinks";
+import AdminOnly from "../components/AdminOnly";
+import DaysHolding from '../components/DaysHolding';
 
 // Stable Token-2022 program id (constant on Solana)
 const TOKEN22 = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
@@ -35,7 +42,6 @@ function useCountdown(start: number, len: number) {
 
 /// Robust helpers that work across different spl-token versions/ESM builds.
 const getAta = (mint: PublicKey, owner: PublicKey) => {
-  // Prefer getAssociatedTokenAddressSync if present; otherwise fall back to getAssociatedTokenAddress.
   const fn =
     (spl as any)['getAssociatedTokenAddressSync'] ??
     (spl as any)['getAssociatedTokenAddress'];
@@ -44,7 +50,6 @@ const getAta = (mint: PublicKey, owner: PublicKey) => {
 };
 
 const createAtaIx = (payer: PublicKey, ata: PublicKey, owner: PublicKey, mint: PublicKey) => {
-  // Prefer idempotent helper if present; otherwise use the classic instruction creator.
   const fn =
     (spl as any)['createAssociatedTokenAccountIdempotentInstruction'] ??
     (spl as any)['createAssociatedTokenAccountInstruction'];
@@ -90,11 +95,11 @@ export default function Page() {
       setStatus(e.message || String(e));
     }
   }
-useEffect(() => {
-  load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [wallet.publicKey]);
 
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wallet.publicKey]);
 
   async function toggle() {
     try {
@@ -170,50 +175,75 @@ useEffect(() => {
 
   return (
     <Providers>
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div><b>$UP</b> Dashboard</div>
-          <WalletMultiButton className="btn" />
-        </div>
+      {/* --- New global container + Header + Hero --- */}
+      <div className="min-h-dvh bg-[#0b0b14] text-white">
+        <Header />
 
-        <div className="card">
-          <b>Your $UP</b>
-          <div>Balance: <b>{balance}</b></div>
-        </div>
+        <Hero>
+          {/* Holding badge shown right under the hero text */}
+          <div className="mt-6">
+            <DaysHolding mintAddress={process.env.NEXT_PUBLIC_MINT!} />
+          </div>
+        </Hero>
 
-        <div className="card">
-          <b>Weekly Rewards</b>
-          <div>Next epoch in: {countdown}</div>
-        </div>
+        {/* Keep your existing content in a centered main container */}
+        <main className="mx-auto my-10 w-full max-w-6xl px-4">
+          {/* Your $UP card */}
+          <div className="card">
+            <b>Your $UP</b>
+            <div>Balance: <b>{balance}</b></div>
+            {/* If you also want the badge here, uncomment: */}
+            {/* <DaysHolding mintAddress={process.env.NEXT_PUBLIC_MINT!} className="mt-4" /> */}
+          </div>
 
-        <div className="card">
-          <b>Send $UP (fees apply)</b>
-          <label>Recipient address</label>
-          <input value={recipient} onChange={e => setRecipient(e.target.value)} placeholder="Enter Solana address" />
-          <div className="row">
-            <div className="col">
-              <label>Amount (UI units)</label>
-              <input value={amountUi} onChange={e => setAmountUi(e.target.value)} placeholder="e.g. 100.5" />
+          {/* Weekly rewards */}
+          <div className="card">
+            <b>Weekly Rewards</b>
+            <div>Next epoch in: {countdown}</div>
+          </div>
+
+          {/* Send card */}
+          <div className="card">
+            <b>Send $UP (fees apply)</b>
+            <label>Recipient address</label>
+            <input value={recipient} onChange={e => setRecipient(e.target.value)} placeholder="Enter Solana address" />
+            <div className="row">
+              <div className="col">
+                <label>Amount (UI units)</label>
+                <input value={amountUi} onChange={e => setAmountUi(e.target.value)} placeholder="e.g. 100.5" />
+              </div>
+              <div className="col" style={{ display: 'flex', alignItems: 'flex-end' }}>
+                <button className="btn" onClick={send}>Send via Program</button>
+              </div>
             </div>
-            <div className="col" style={{ display: 'flex', alignItems: 'flex-end' }}>
-              <button className="btn" onClick={send}>Send via Program</button>
+            <div style={{ opacity: .7, marginTop: 8 }}>
+              This routes through the $UP program so 1% burn, 1% reflection, 1% dev, 0.5% weekly pool are applied.
             </div>
           </div>
-          <div style={{ opacity: .7, marginTop: 8 }}>
-            This routes through the $UP program so 1% burn, 1% reflection, 1% dev, 0.5% weekly pool are applied.
-          </div>
-        </div>
 
-        <div className="card">
-          <b>Hook Enforcement</b>
-          <div>Status: <b>{enforce ? 'ON' : 'OFF'}</b></div>
-          {isAdmin && <button className="btn" onClick={toggle}>{enforce ? 'Disable' : 'Enable'}</button>}
-          <div style={{ opacity: .7, marginTop: 8 }}>
-            When ON, wallet “Send” is blocked; use this page or any integrated app to transfer.
-          </div>
-        </div>
+          {/* Admin-only: Hook Enforcement */}
+          <AdminOnly>
+            <div className="card">
+              <b>Hook Enforcement</b>
+              <div>Status: <b>{enforce ? 'ON' : 'OFF'}</b></div>
+              {isAdmin && <button className="btn" onClick={toggle}>{enforce ? 'Disable' : 'Enable'}</button>}
+              <div style={{ opacity: .7, marginTop: 8 }}>
+                When ON, wallet “Send” is blocked; use this page or any integrated app to transfer.
+              </div>
+            </div>
+          </AdminOnly>
 
-        {status && <div className="card"><b>Status:</b> {status}</div>}
+          {status && <div className="card"><b>Status:</b> {status}</div>}
+        </main>
+
+        {/* Footer with socials */}
+        <footer className="mx-auto mt-14 w-full max-w-6xl px-4 pb-16 text-white/60">
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          <div className="mt-6">
+            <SocialLinks />
+          </div>
+          <p className="mt-4 text-xs">© {new Date().getFullYear()} UP — all systems go 🚀</p>
+        </footer>
       </div>
     </Providers>
   );
