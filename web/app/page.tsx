@@ -3,9 +3,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Providers from './providers';
 // import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'; // now provided in <Header/>
 import { useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey, Connection, SystemProgram, Transaction } from '@solana/web3.js';
+import {
+  PublicKey,
+  Connection,
+  SystemProgram,
+  Transaction,
+  TransactionInstruction,
+  SYSVAR_RENT_PUBKEY,
+} from '@solana/web3.js';
 import { getProgram } from '../lib/anchorClient';
-import * as spl from '@solana/spl-token';
 import { BN } from '@coral-xyz/anchor';
 
 // ✨ New UI pieces
@@ -17,6 +23,8 @@ import DaysHolding from '../components/DaysHolding';
 
 // Stable Token-2022 program id (constant on Solana)
 const TOKEN22 = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+// Associated Token Account program id
+const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
 // Prefer configuring your mint decimals via env to avoid client-time mint RPC
 const DECIMALS = Number(process.env.NEXT_PUBLIC_DECIMALS ?? '9');
@@ -40,21 +48,41 @@ function useCountdown(start: number, len: number) {
   return `${d}d ${h}h ${m}m ${sec}s`;
 }
 
-/// Robust helpers that work across different spl-token versions/ESM builds.
-const getAta = (mint: PublicKey, owner: PublicKey) => {
-  const fn =
-    (spl as any)['getAssociatedTokenAddressSync'] ??
-    (spl as any)['getAssociatedTokenAddress'];
-  // ownerIsSigner = true; explicit program ids to target Token-2022
-  return fn(mint, owner, true, TOKEN22, (spl as any)['ASSOCIATED_TOKEN_PROGRAM_ID']);
-};
+/** ===== Associated Token helpers (no @solana/spl-token) ===== */
 
-const createAtaIx = (payer: PublicKey, ata: PublicKey, owner: PublicKey, mint: PublicKey) => {
-  const fn =
-    (spl as any)['createAssociatedTokenAccountIdempotentInstruction'] ??
-    (spl as any)['createAssociatedTokenAccountInstruction'];
-  return fn(payer, ata, owner, mint, TOKEN22, (spl as any)['ASSOCIATED_TOKEN_PROGRAM_ID']);
-};
+/** Derive ATA for Token-2022 mints */
+function deriveAta(owner: PublicKey, mint: PublicKey): PublicKey {
+  const [ata] = PublicKey.findProgramAddressSync(
+    [owner.toBuffer(), TOKEN22.toBuffer(), mint.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  return ata;
+}
+
+/** CreateAssociatedTokenAccountIdempotent for Token-2022 */
+function createAtaIdempotentIx(
+  payer: PublicKey,
+  ata: PublicKey,
+  owner: PublicKey,
+  mint: PublicKey
+) {
+  const keys = [
+    { pubkey: payer,               isSigner: true,  isWritable: true  }, // payer
+    { pubkey: ata,                 isSigner: false, isWritable: true  }, // ATA
+    { pubkey: owner,               isSigner: false, isWritable: false }, // owner
+    { pubkey: mint,                isSigner: false, isWritable: false }, // mint
+    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    { pubkey: TOKEN22,                 isSigner: false, isWritable: false }, // token-2022 program
+    { pubkey: SYSVAR_RENT_PUBKEY,      isSigner: false, isWritable: false }, // rent
+  ];
+  // Instruction data: 1 = CreateIdempotent
+  const data = Buffer.from([1]);
+  return new TransactionInstruction({
+    keys,
+    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+    data,
+  });
+}
 
 export default function Page() {
   const wallet = useWallet();
@@ -87,7 +115,7 @@ export default function Page() {
       // balance
       if (wallet.publicKey) {
         const conn = new Connection(rpc, 'confirmed');
-        const ata = getAta(MINT, wallet.publicKey);
+        const ata = deriveAta(wallet.publicKey, MINT);
         const info = await conn.getTokenAccountBalance(ata).catch(() => null);
         setBalance(info?.value?.uiAmountString || '0');
       }
@@ -123,14 +151,14 @@ export default function Page() {
       // ensure ATAs
       const payer = wallet.publicKey;
       const toOwner = new PublicKey(recipient);
-      const fromAta = getAta(MINT, payer);
-      const toAta = getAta(MINT, toOwner);
-      const devAta = getAta(MINT, DEV_WALLET);
+      const fromAta = deriveAta(payer, MINT);
+      const toAta   = deriveAta(toOwner, MINT);
+      const devAta  = deriveAta(DEV_WALLET, MINT);
 
-      const ixs: any[] = [];
-      if (!(await conn.getAccountInfo(fromAta))) ixs.push(createAtaIx(payer, fromAta, payer, MINT));
-      if (!(await conn.getAccountInfo(toAta))) ixs.push(createAtaIx(payer, toAta, toOwner, MINT));
-      if (!(await conn.getAccountInfo(devAta))) ixs.push(createAtaIx(payer, devAta, DEV_WALLET, MINT));
+      const ixs: TransactionInstruction[] = [];
+      if (!(await conn.getAccountInfo(fromAta))) ixs.push(createAtaIdempotentIx(payer, fromAta, payer, MINT));
+      if (!(await conn.getAccountInfo(toAta)))   ixs.push(createAtaIdempotentIx(payer, toAta, toOwner, MINT));
+      if (!(await conn.getAccountInfo(devAta)))  ixs.push(createAtaIdempotentIx(payer, devAta, DEV_WALLET, MINT));
 
       if (ixs.length > 0) {
         const tx = new Transaction().add(...ixs);

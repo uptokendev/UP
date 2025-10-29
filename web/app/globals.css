@@ -1,1 +1,32 @@
-@tailwind base; @tailwind components; @tailwind utilities; body{margin:0;font-family:system-ui,Segoe UI,Roboto,Ubuntu;background:#0b0e13;color:#e6edf3}input{padding:8px;border-radius:8px;border:1px solid #2b3342;background:#0f141c;color:#e6edf3}label{display:block;margin:6px 0 4px}.row{display:flex;gap:12px;flex-wrap:wrap}.col{flex:1;min-width:280px}.card{background:#121722;border:1px solid #1f2633;border-radius:12px;padding:16px;margin:12px}.btn{padding:10px 14px;border:1px solid #2b3342;border-radius:10px;background:#1a2230;color:#e6edf3;cursor:pointer}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme tokens (match your neon logo + Cryption-dark vibe) */
+:root{
+  --bg: #0b0b14;
+  --fg: 255,255,255;
+  --soft: rgba(255,255,255,.07);
+  --border: rgba(255,255,255,.10);
+}
+html,body { background: var(--bg); color: rgb(var(--fg)); }
+
+/* Helpers for your existing classes so old cards still look good */
+.card{
+  @apply rounded-2xl border border-white/10 bg-white/5 p-5 md:p-6 backdrop-blur;
+}
+.btn{
+  @apply inline-flex items-center justify-center rounded-xl bg-white/10 px-4 py-2 text-sm font-medium
+         hover:bg-white/15 transition;
+}
+.row{ @apply grid grid-cols-1 md:grid-cols-2 gap-4; }
+.col{ @apply w-full; }
+
+/* Optional big background glow */
+.body-glow:before{
+  content:"";
+  position:fixed; inset:0; pointer-events:none; z-index:-1;
+  background:
+    radial-gradient(900px 400px at 20% -10%, rgba(0,224,255,.25), transparent 60%),
+    radial-gradient(800px 360px at 80% 0%, rgba(138,43,226,.25), transparent 60%);
+}
