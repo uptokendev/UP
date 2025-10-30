@@ -1,7 +1,6 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
 import Providers from './providers';
-// import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'; // now provided in <Header/>
 import { useWallet } from '@solana/wallet-adapter-react';
 import {
   PublicKey,
@@ -86,6 +85,8 @@ function createAtaIdempotentIx(
 
 export default function Page() {
   const wallet = useWallet();
+
+  // ---- Top-level state (hooks must stay here) ----
   const [cfg, setCfg] = useState<any>(null);
   const [authority, setAuthority] = useState('');
   const [balance, setBalance] = useState('0');
@@ -93,6 +94,10 @@ export default function Page() {
   const [recipient, setRecipient] = useState('');
   const [amountUi, setAmountUi] = useState('');
   const [enforce, setEnforce] = useState(false);
+
+  // Dev tools state
+  const [mintTo, setMintTo] = useState('');          // faucet target (optional)
+  const [newAuthority, setNewAuthority] = useState(''); // program authority transfer
 
   const rpc = process.env.NEXT_PUBLIC_RPC_URL || 'https://api.devnet.solana.com';
   const MINT = useMemo(() => new PublicKey(process.env.NEXT_PUBLIC_MINT!), []);
@@ -200,24 +205,45 @@ export default function Page() {
       setStatus(e.message || String(e));
     }
   }
-async function faucet() {
-  try {
-    if (!wallet.publicKey) throw new Error("Connect wallet first");
-    setStatus("Minting 1000 $UP...");
-    const amountRaw = (BigInt(1000) * (10n ** BigInt(DECIMALS))).toString();
-    const res = await fetch("/api/faucet", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ to: wallet.publicKey.toBase58(), amount: amountRaw }),
-    });
-    const j = await res.json();
-    if (!res.ok) throw new Error(j.error || "Faucet failed");
-    setStatus(`Minted. Signature: ${j.signature}`);
-    await load();
-  } catch (e: any) {
-    setStatus(e.message || String(e));
+
+  // ---- Dev tools: faucet (server API) ----
+  async function faucetTo() {
+    try {
+      const to = (mintTo || wallet.publicKey?.toBase58() || '').trim();
+      if (!to) throw new Error('Provide a destination or connect a wallet');
+      setStatus(`Minting 1000 $UP to ${to.slice(0,4)}…${to.slice(-4)}...`);
+      const amountRaw = (BigInt(1000) * (10n ** BigInt(DECIMALS))).toString();
+      const res = await fetch('/api/faucet', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ to, amount: amountRaw }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || 'Faucet failed');
+      setStatus(`Minted. Signature: ${j.signature}`);
+      await load();
+    } catch (e:any) {
+      setStatus(e.message || String(e));
+    }
   }
-}
+
+  // ---- Dev tools: transfer on-chain authority ----
+  async function transferAuthority() {
+    try {
+      if (!wallet.publicKey) throw new Error('Connect with current authority');
+      setStatus('Transferring authority...');
+      const program = await getProgram();
+      // If your method differs, rename here.
+      await program.methods
+        .setAuthority(new PublicKey(newAuthority))
+        .rpc();
+      setStatus('Authority updated');
+      await load();
+    } catch (e:any) {
+      setStatus(e.message || String(e));
+    }
+  }
+
   return (
     <Providers>
       {/* --- New global container + Header + Hero --- */}
@@ -237,22 +263,50 @@ async function faucet() {
           <div className="card">
             <b>Your $UP</b>
             <div>Balance: <b>{balance}</b></div>
-            {/* If you also want the badge here, uncomment: */}
-            {/* <DaysHolding mintAddress={process.env.NEXT_PUBLIC_MINT!} className="mt-4" /> */}
           </div>
 
+          {/* Dev Faucet (single version; can mint to any address) */}
           <AdminOnly>
-  <div className="card">
-    <b>Dev Faucet</b>
-    <div className="text-white/70">
-      Mint test tokens to the connected wallet (devnet only).
-    </div>
-    <div className="mt-3">
-      <button className="btn" onClick={faucet}>Mint 1000 $UP</button>
-    </div>
-  </div>
-</AdminOnly>
+            <div className="card">
+              <b>Dev Faucet</b>
+              <div className="text-white/70">Mint test tokens on devnet.</div>
+              <div className="row mt-3">
+                <div className="col">
+                  <label>Mint to (pubkey, optional)</label>
+                  <input
+                    value={mintTo}
+                    onChange={e => setMintTo(e.target.value)}
+                    placeholder="Leave empty to use connected wallet"
+                  />
+                </div>
+                <div className="col" style={{ display:'flex', alignItems:'flex-end' }}>
+                  <button className="btn" onClick={faucetTo}>Mint 1000 $UP</button>
+                </div>
+              </div>
+              <div className="text-white/60 mt-2 text-sm">Faucet is devnet-only and must be enabled in env.</div>
+            </div>
+          </AdminOnly>
 
+          {/* Transfer Program Authority */}
+          <AdminOnly>
+            <div className="card">
+              <b>Transfer Program Authority</b>
+              <div className="text-white/70">Requires signature from the current authority.</div>
+              <div className="row mt-3">
+                <div className="col">
+                  <label>New Authority (pubkey)</label>
+                  <input
+                    value={newAuthority}
+                    onChange={e => setNewAuthority(e.target.value)}
+                    placeholder="New admin public key"
+                  />
+                </div>
+                <div className="col" style={{ display:'flex', alignItems:'flex-end' }}>
+                  <button className="btn" onClick={transferAuthority}>Transfer</button>
+                </div>
+              </div>
+            </div>
+          </AdminOnly>
 
           {/* Weekly rewards */}
           <div className="card">
