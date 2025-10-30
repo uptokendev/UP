@@ -200,7 +200,24 @@ export default function Page() {
       setStatus(e.message || String(e));
     }
   }
-
+async function faucet() {
+  try {
+    if (!wallet.publicKey) throw new Error("Connect wallet first");
+    setStatus("Minting 1000 $UP...");
+    const amountRaw = (BigInt(1000) * (10n ** BigInt(DECIMALS))).toString();
+    const res = await fetch("/api/faucet", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ to: wallet.publicKey.toBase58(), amount: amountRaw }),
+    });
+    const j = await res.json();
+    if (!res.ok) throw new Error(j.error || "Faucet failed");
+    setStatus(`Minted. Signature: ${j.signature}`);
+    await load();
+  } catch (e: any) {
+    setStatus(e.message || String(e));
+  }
+}
   return (
     <Providers>
       {/* --- New global container + Header + Hero --- */}
@@ -223,6 +240,19 @@ export default function Page() {
             {/* If you also want the badge here, uncomment: */}
             {/* <DaysHolding mintAddress={process.env.NEXT_PUBLIC_MINT!} className="mt-4" /> */}
           </div>
+
+          <AdminOnly>
+  <div className="card">
+    <b>Dev Faucet</b>
+    <div className="text-white/70">
+      Mint test tokens to the connected wallet (devnet only).
+    </div>
+    <div className="mt-3">
+      <button className="btn" onClick={faucet}>Mint 1000 $UP</button>
+    </div>
+  </div>
+</AdminOnly>
+
 
           {/* Weekly rewards */}
           <div className="card">
