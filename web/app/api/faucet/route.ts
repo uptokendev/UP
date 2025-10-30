@@ -16,7 +16,7 @@ import bs58 from "bs58";
 
 /** Program IDs */
 const TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
-const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey("2JZV7F2XYcyk4zqiExQ6Q5UMx6EbQbheP6sD6edAkq4k");
 
 /** Derive Token-2022 ATA: PDA[ owner, TOKEN_2022_PROGRAM_ID, mint ] */
 function deriveAta(owner: PublicKey, mint: PublicKey): PublicKey {
