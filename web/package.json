@@ -17,6 +17,7 @@
     "@solana/wallet-adapter-react-ui": "^0.9.39",
     "@solana/wallet-adapter-wallets": "^0.19.33",
     "@solana/web3.js": "^1.98.4",
+    "bs58": "^6.0.0",
     "dayjs": "^1.11.13",
     "next": "^14.2.33",
     "react": "18.3.1",

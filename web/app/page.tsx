@@ -13,19 +13,17 @@ import {
 import { getProgram } from '../lib/anchorClient';
 import { BN } from '@coral-xyz/anchor';
 
-// ✨ New UI pieces
 import Header from "../components/Header";
 import Hero from "../components/Hero";
 import SocialLinks from "../components/SocialLinks";
 import AdminOnly from "../components/AdminOnly";
 import DaysHolding from '../components/DaysHolding';
 
-// Stable Token-2022 program id (constant on Solana)
+// Token-2022 + ATA program IDs
 const TOKEN22 = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
-// Associated Token Account program id
 const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
-// Prefer configuring your mint decimals via env to avoid client-time mint RPC
+// Prefer configuring decimals via env
 const DECIMALS = Number(process.env.NEXT_PUBLIC_DECIMALS ?? '9');
 
 function toRaw(amountUi: string, decimals: number) {
@@ -47,9 +45,7 @@ function useCountdown(start: number, len: number) {
   return `${d}d ${h}h ${m}m ${sec}s`;
 }
 
-/** ===== Associated Token helpers (no @solana/spl-token) ===== */
-
-/** Derive ATA for Token-2022 mints */
+/** ===== ATA helpers (no @solana/spl-token) ===== */
 function deriveAta(owner: PublicKey, mint: PublicKey): PublicKey {
   const [ata] = PublicKey.findProgramAddressSync(
     [owner.toBuffer(), TOKEN22.toBuffer(), mint.toBuffer()],
@@ -58,7 +54,6 @@ function deriveAta(owner: PublicKey, mint: PublicKey): PublicKey {
   return ata;
 }
 
-/** CreateAssociatedTokenAccountIdempotent for Token-2022 */
 function createAtaIdempotentIx(
   payer: PublicKey,
   ata: PublicKey,
@@ -66,27 +61,31 @@ function createAtaIdempotentIx(
   mint: PublicKey
 ) {
   const keys = [
-    { pubkey: payer,               isSigner: true,  isWritable: true  }, // payer
-    { pubkey: ata,                 isSigner: false, isWritable: true  }, // ATA
-    { pubkey: owner,               isSigner: false, isWritable: false }, // owner
-    { pubkey: mint,                isSigner: false, isWritable: false }, // mint
+    { pubkey: payer,               isSigner: true,  isWritable: true  },
+    { pubkey: ata,                 isSigner: false, isWritable: true  },
+    { pubkey: owner,               isSigner: false, isWritable: false },
+    { pubkey: mint,                isSigner: false, isWritable: false },
     { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-    { pubkey: TOKEN22,                 isSigner: false, isWritable: false }, // token-2022 program
-    { pubkey: SYSVAR_RENT_PUBKEY,      isSigner: false, isWritable: false }, // rent
+    { pubkey: TOKEN22,                 isSigner: false, isWritable: false },
+    { pubkey: SYSVAR_RENT_PUBKEY,      isSigner: false, isWritable: false },
   ];
-  // Instruction data: 1 = CreateIdempotent
-  const data = Buffer.from([1]);
-  return new TransactionInstruction({
-    keys,
-    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-    data,
-  });
+  const data = Buffer.from([1]); // CreateIdempotent
+  return new TransactionInstruction({ keys, programId: ASSOCIATED_TOKEN_PROGRAM_ID, data });
 }
 
+/** ---------- Wrapper: mount Providers here ---------- */
 export default function Page() {
+  return (
+    <Providers>
+      <Dashboard />
+    </Providers>
+  );
+}
+
+/** ---------- Actual page that uses useWallet() ---------- */
+function Dashboard() {
   const wallet = useWallet();
 
-  // ---- Top-level state (hooks must stay here) ----
   const [cfg, setCfg] = useState<any>(null);
   const [authority, setAuthority] = useState('');
   const [balance, setBalance] = useState('0');
@@ -96,7 +95,7 @@ export default function Page() {
   const [enforce, setEnforce] = useState(false);
 
   // Dev tools state
-  const [mintTo, setMintTo] = useState('');          // faucet target (optional)
+  const [mintTo, setMintTo] = useState('');            // faucet target
   const [newAuthority, setNewAuthority] = useState(''); // program authority transfer
 
   const rpc = process.env.NEXT_PUBLIC_RPC_URL || 'https://api.devnet.solana.com';
@@ -149,13 +148,24 @@ export default function Page() {
   async function send() {
     try {
       if (!wallet.publicKey) throw new Error('Connect wallet first');
+
+      // Basic validation
+      const rec = recipient.trim();
+      if (!rec) throw new Error("Enter recipient address");
+      let toOwner: PublicKey;
+      try { toOwner = new PublicKey(rec); } catch { throw new Error("Invalid recipient address"); }
+
+      const amt = amountUi.trim();
+      if (!amt) throw new Error("Enter amount");
+      const amtNum = Number(amt);
+      if (!isFinite(amtNum) || amtNum <= 0) throw new Error("Amount must be a positive number");
+
       setStatus('Preparing transfer...');
       const program = await getProgram();
       const conn = new Connection(rpc, 'confirmed');
 
       // ensure ATAs
       const payer = wallet.publicKey;
-      const toOwner = new PublicKey(recipient);
       const fromAta = deriveAta(payer, MINT);
       const toAta   = deriveAta(toOwner, MINT);
       const devAta  = deriveAta(DEV_WALLET, MINT);
@@ -174,11 +184,14 @@ export default function Page() {
       // derive epoch PDA for lazy rollover
       const [configPda] = PublicKey.findProgramAddressSync([Buffer.from('config')], program.programId);
       const cfgAcc: any = await program.account.globalConfig.fetch(configPda);
-      const nextId = BigInt(Math.floor(Number(cfgAcc.currentEpochStart) / Number(cfgAcc.epochLength)) + 1);
+      const epochLen = Number(cfgAcc.epochLength);
+      if (!epochLen) throw new Error("Config: epochLength is zero");
+
+      const nextId = BigInt(Math.floor(Number(cfgAcc.currentEpochStart) / epochLen) + 1);
       const seed = Buffer.alloc(8); seed.writeBigUInt64LE(nextId);
       const [epochPda] = PublicKey.findProgramAddressSync([Buffer.from('epoch'), seed], program.programId);
 
-      const raw = toRaw(amountUi, DECIMALS);
+      const raw = toRaw(amt, DECIMALS);
 
       setStatus('Sending...');
       const txSig = await program.methods
@@ -206,7 +219,7 @@ export default function Page() {
     }
   }
 
-  // ---- Dev tools: faucet (server API) ----
+  // Dev faucet (server API)
   async function faucetTo() {
     try {
       const to = (mintTo || wallet.publicKey?.toBase58() || '').trim();
@@ -227,13 +240,12 @@ export default function Page() {
     }
   }
 
-  // ---- Dev tools: transfer on-chain authority ----
+  // Transfer on-chain authority (if your program exposes setAuthority)
   async function transferAuthority() {
     try {
       if (!wallet.publicKey) throw new Error('Connect with current authority');
       setStatus('Transferring authority...');
       const program = await getProgram();
-      // If your method differs, rename here.
       await program.methods
         .setAuthority(new PublicKey(newAuthority))
         .rpc();
@@ -245,118 +257,104 @@ export default function Page() {
   }
 
   return (
-    <Providers>
-      {/* --- New global container + Header + Hero --- */}
-      <div className="min-h-dvh bg-[#0b0b14] text-white">
-        <Header />
+    <div className="min-h-dvh bg-[#0b0b14] text-white">
+      <Header />
 
-        <Hero>
-          {/* Holding badge shown right under the hero text */}
-          <div className="mt-6">
-            <DaysHolding mintAddress={process.env.NEXT_PUBLIC_MINT!} />
-          </div>
-        </Hero>
+      <Hero>
+        <div className="mt-6">
+          <DaysHolding mintAddress={process.env.NEXT_PUBLIC_MINT!} />
+        </div>
+      </Hero>
 
-        {/* Keep your existing content in a centered main container */}
-        <main className="mx-auto my-10 w-full max-w-6xl px-4">
-          {/* Your $UP card */}
+      <main className="mx-auto my-10 w-full max-w-6xl px-4">
+        <div className="card">
+          <b>Your $UP</b>
+          <div>Balance: <b>{balance}</b></div>
+        </div>
+
+        <AdminOnly>
           <div className="card">
-            <b>Your $UP</b>
-            <div>Balance: <b>{balance}</b></div>
-          </div>
-
-          {/* Dev Faucet (single version; can mint to any address) */}
-          <AdminOnly>
-            <div className="card">
-              <b>Dev Faucet</b>
-              <div className="text-white/70">Mint test tokens on devnet.</div>
-              <div className="row mt-3">
-                <div className="col">
-                  <label>Mint to (pubkey, optional)</label>
-                  <input
-                    value={mintTo}
-                    onChange={e => setMintTo(e.target.value)}
-                    placeholder="Leave empty to use connected wallet"
-                  />
-                </div>
-                <div className="col" style={{ display:'flex', alignItems:'flex-end' }}>
-                  <button className="btn" onClick={faucetTo}>Mint 1000 $UP</button>
-                </div>
-              </div>
-              <div className="text-white/60 mt-2 text-sm">Faucet is devnet-only and must be enabled in env.</div>
-            </div>
-          </AdminOnly>
-
-          {/* Transfer Program Authority */}
-          <AdminOnly>
-            <div className="card">
-              <b>Transfer Program Authority</b>
-              <div className="text-white/70">Requires signature from the current authority.</div>
-              <div className="row mt-3">
-                <div className="col">
-                  <label>New Authority (pubkey)</label>
-                  <input
-                    value={newAuthority}
-                    onChange={e => setNewAuthority(e.target.value)}
-                    placeholder="New admin public key"
-                  />
-                </div>
-                <div className="col" style={{ display:'flex', alignItems:'flex-end' }}>
-                  <button className="btn" onClick={transferAuthority}>Transfer</button>
-                </div>
-              </div>
-            </div>
-          </AdminOnly>
-
-          {/* Weekly rewards */}
-          <div className="card">
-            <b>Weekly Rewards</b>
-            <div>Next epoch in: {countdown}</div>
-          </div>
-
-          {/* Send card */}
-          <div className="card">
-            <b>Send $UP (fees apply)</b>
-            <label>Recipient address</label>
-            <input value={recipient} onChange={e => setRecipient(e.target.value)} placeholder="Enter Solana address" />
-            <div className="row">
+            <b>Dev Faucet</b>
+            <div className="text-white/70">Mint test tokens on devnet.</div>
+            <div className="row mt-3">
               <div className="col">
-                <label>Amount (UI units)</label>
-                <input value={amountUi} onChange={e => setAmountUi(e.target.value)} placeholder="e.g. 100.5" />
+                <label>Mint to (pubkey, optional)</label>
+                <input
+                  value={mintTo}
+                  onChange={e => setMintTo(e.target.value)}
+                  placeholder="Leave empty to use connected wallet"
+                />
               </div>
-              <div className="col" style={{ display: 'flex', alignItems: 'flex-end' }}>
-                <button className="btn" onClick={send}>Send via Program</button>
+              <div className="col" style={{ display:'flex', alignItems:'flex-end' }}>
+                <button className="btn" onClick={faucetTo}>Mint 1000 $UP</button>
               </div>
             </div>
+            <div className="text-white/60 mt-2 text-sm">Faucet is devnet-only and must be enabled in env.</div>
+          </div>
+        </AdminOnly>
+
+        <AdminOnly>
+          <div className="card">
+            <b>Transfer Program Authority</b>
+            <div className="text-white/70">Requires signature from the current authority.</div>
+            <div className="row mt-3">
+              <div className="col">
+                <label>New Authority (pubkey)</label>
+                <input
+                  value={newAuthority}
+                  onChange={e => setNewAuthority(e.target.value)}
+                  placeholder="New admin public key"
+                />
+              </div>
+              <div className="col" style={{ display:'flex', alignItems:'flex-end' }}>
+                <button className="btn" onClick={transferAuthority}>Transfer</button>
+              </div>
+            </div>
+          </div>
+        </AdminOnly>
+
+        <div className="card">
+          <b>Weekly Rewards</b>
+          <div>Next epoch in: {countdown}</div>
+        </div>
+
+        <div className="card">
+          <b>Send $UP (fees apply)</b>
+          <label>Recipient address</label>
+          <input value={recipient} onChange={e => setRecipient(e.target.value)} placeholder="Enter Solana address" />
+          <div className="row">
+            <div className="col">
+              <label>Amount (UI units)</label>
+              <input value={amountUi} onChange={e => setAmountUi(e.target.value)} placeholder="e.g. 100.5" />
+            </div>
+            <div className="col" style={{ display: 'flex', alignItems: 'flex-end' }}>
+              <button className="btn" onClick={send}>Send via Program</button>
+            </div>
+          </div>
+          <div style={{ opacity: .7, marginTop: 8 }}>
+            This routes through the $UP program so 1% burn, 1% reflection, 1% dev, 0.5% weekly pool are applied.
+          </div>
+        </div>
+
+        <AdminOnly>
+          <div className="card">
+            <b>Hook Enforcement</b>
+            <div>Status: <b>{enforce ? 'ON' : 'OFF'}</b></div>
+            {isAdmin && <button className="btn" onClick={toggle}>{enforce ? 'Disable' : 'Enable'}</button>}
             <div style={{ opacity: .7, marginTop: 8 }}>
-              This routes through the $UP program so 1% burn, 1% reflection, 1% dev, 0.5% weekly pool are applied.
+              When ON, wallet “Send” is blocked; use this page or any integrated app to transfer.
             </div>
           </div>
+        </AdminOnly>
 
-          {/* Admin-only: Hook Enforcement */}
-          <AdminOnly>
-            <div className="card">
-              <b>Hook Enforcement</b>
-              <div>Status: <b>{enforce ? 'ON' : 'OFF'}</b></div>
-              {isAdmin && <button className="btn" onClick={toggle}>{enforce ? 'Disable' : 'Enable'}</button>}
-              <div style={{ opacity: .7, marginTop: 8 }}>
-                When ON, wallet “Send” is blocked; use this page or any integrated app to transfer.
-              </div>
-            </div>
-          </AdminOnly>
+        {status && <div className="card"><b>Status:</b> {status}</div>}
+      </main>
 
-          {status && <div className="card"><b>Status:</b> {status}</div>}
-        </main>
-
-        {/* Footer with socials */}
-        <footer className="mx-auto mt-14 w-full max-w-6xl px-4 pb-16 text-white/60">
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-          <div className="mt-6">
-            <SocialLinks />
-          </div>
-          <p className="mt-4 text-xs">© {new Date().getFullYear()} UP — all systems go 🚀</p>
-        </footer>
-      </div>
-    </Providers>
+      <footer className="mx-auto mt-14 w-full max-w-6xl px-4 pb-16 text-white/60">
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="mt-6"><SocialLinks /></div>
+        <p className="mt-4 text-xs">© {new Date().getFullYear()} UP — all systems go 🚀</p>
+      </footer>
+    </div>
   );
 }
