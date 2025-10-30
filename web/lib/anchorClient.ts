@@ -2,6 +2,13 @@
 
 import * as anchor from '@coral-xyz/anchor';
 import { Connection, PublicKey } from '@solana/web3.js';
+import idl from '../../idl/up_token.json'; // your IDL file name
+
+const PROGRAM_ID = new PublicKey(
+  process.env.NEXT_PUBLIC_PROGRAM_ID ||
+  // fallback to IDL metadata if present
+  ((idl as any).metadata?.address ?? 'REPLACE_ME_IF_NO_METADATA')
+);
 
 export async function getProgram() {
   const rpc = process.env.NEXT_PUBLIC_RPC_URL || 'https://api.devnet.solana.com';
